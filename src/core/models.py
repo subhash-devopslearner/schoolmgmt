@@ -38,24 +38,34 @@ SEMESTER = (
 )
 
 TERMS = (
-    ('I', 'Term-I'),
-    ('II', 'Term-II'),
+    ('Term-I', 'TERM-I'),
+    ('Term-II', 'TERM-II'),
 )
+
+SALUTATIONS = (
+    ('Dr.', 'Dr.'),
+    ('Prof.', 'Prof.'),
+    ('Mr.', 'Mr.'),
+    ('Ms.', 'Ms.'),
+)
+
 
 class AcademicYear(models.Model):
     academic_year = models.CharField(max_length=10) # 2025-2026
     is_current = models.BooleanField()       
 
     def __str__(self):
-        return self.academic_year       
+        return self.academic_year    
+       
 
 class AcademicTerm(models.Model):
-    academic_term = models.CharField(choices=TERMS)
+    academic_term = models.CharField(max_length=10, choices=TERMS)
     term_startdate = models.DateField()
     term_enddate = models.DateField()
 
     def __str__(self):
         return self.academic_term
+    
 
 class Department(models.Model):
     dept_name = models.CharField(max_length=50)
@@ -63,23 +73,64 @@ class Department(models.Model):
 
     def __str__(self):
         return self.dept_name
+    
 
-class Class(models.Model):
-    year = models.CharField(choices=YEAR)
-    program = models.CharField(choices=PROGRAMS)
-    branch = models.CharField(choices=BRANCHES)
-    div = models.CharField(choices=DIVISON, blank=True)
-    semester = models.CharField(choices=SEMESTER)
+class AcademicClass(models.Model):
+    year = models.CharField(max_length=20, choices=YEAR)
+    program = models.CharField(max_length=20, choices=PROGRAMS)
+    branch = models.CharField(max_length=10, choices=BRANCHES)
+    div = models.CharField(max_length=10, choices=DIVISON, blank=True)
+    semester = models.CharField(max_length=10, choices=SEMESTER)
     academic_year = models.ForeignKey(AcademicYear, on_delete=models.CASCADE)
-    academic_term = models.ForeignKey(AcademicTerm, on_delete=models.CASCADE)
+    academic_term = models.ForeignKey(AcademicTerm, on_delete=models.CASCADE)    
+    class_name = models.CharField(max_length=255, unique=True, editable=False)
+
+    class Meta:
+        # Ensures you don't accidentally create the same Div for the same Sem/Year twice
+        unique_together = ('program', 'branch', 'semester', 'div', 'academic_year')
+
+    def save(self, *args, **kwargs):
+        # Added Academic Year to make it truly unique
+        self.class_name = f"{self.program} {self.branch} {self.semester} Div {self.div} ({self.academic_year.academic_year})"
+        super().save(*args, **kwargs)   
 
     def __str__(self):
-        return f"{self.program} {self.branch} {self.div} {self.semester}"
+        return self.class_name
+        
+    
+class Student(models.Model):
+    name = models.CharField(max_length=100)
+    roll_number = models.CharField(max_length=5)
+    sap_id = models.CharField(max_length=11, unique=True)
+    email = models.EmailField(unique=True, blank=True, null=True)
+    mobile_number = models.CharField(max_length=10, unique=True, blank=True, null=True)
+    class_enrolled = models.ForeignKey(AcademicClass, on_delete=models.PROTECT)
 
+    def __str__(self):
+        return f"{self.name} ({self.roll_number})"
+    
+    
+class Faculty(models.Model):
+    salutation = models.CharField(max_length=10, choices=SALUTATIONS)
+    name = models.CharField(max_length=100)
+    employee_id = models.CharField(max_length=10, unique=True, blank=True, null=True)
+    email = models.EmailField(unique=True, blank=True, null=True)
+    mobile_number = models.CharField(max_length=10, unique=True, blank=True, null=True)
+    department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True)    
 
+    def __str__(self):
+        return f"{self.salutation} {self.name} ({self.employee_id})"
+    
+    
+class Subject(models.Model):
+    subject_code = models.CharField(max_length=10, unique=True)
+    subject_name = models.CharField(max_length=100)
+    class_associated = models.ForeignKey(AcademicClass, on_delete=models.SET_NULL, null=True, related_name='subjects') 
+    faculty_assigned = models.ForeignKey(Faculty, on_delete=models.SET_NULL, null=True, related_name='subjects_taught')   
 
+    class Meta:
+        # Ensures a subject code is unique within a specific class
+        unique_together = ('subject_code', 'class_associated')
 
-
-
-
-
+    def __str__(self):
+        return f"{self.subject_name} ({self.class_associated})"
