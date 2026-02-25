@@ -22,19 +22,19 @@ BRANCHES = (
 )
 
 DIVISON = (
-    ('Div-A', 'DIV-A'),
-    ('Div-B', 'DIV-B'),
+    ('Div A', 'DIV-A'),
+    ('Div B', 'DIV-B'),
 )
 
 SEMESTER = (
-    ('Sem-I', 'Semester I'),
-    ('Sem-II', 'Semester II'),
-    ('Sem-III', 'Semester III'),
-    ('Sem-IV', 'Semester IV'),
-    ('Sem-V', 'Semester V'),
-    ('Sem-VI', 'Semester VI'),
-    ('Sem-VII', 'Semester VII'),
-    ('Sem-VIII', 'Semester VIII'),
+    ('Sem I', 'Semester I'),
+    ('Sem II', 'Semester II'),
+    ('Sem III', 'Semester III'),
+    ('Sem IV', 'Semester IV'),
+    ('Sem V', 'Semester V'),
+    ('Sem VI', 'Semester VI'),
+    ('Sem VII', 'Semester VII'),
+    ('Sem VIII', 'Semester VIII'),
 )
 
 TERMS = (
@@ -87,11 +87,11 @@ class AcademicClass(models.Model):
 
     class Meta:
         # Ensures you don't accidentally create the same Div for the same Sem/Year twice
-        unique_together = ('program', 'branch', 'semester', 'div', 'academic_year')
+        unique_together = ('program', 'branch', 'semester', 'div')
 
     def save(self, *args, **kwargs):
         # Added Academic Year to make it truly unique
-        self.class_name = f"{self.program} {self.branch} {self.semester} Div {self.div} ({self.academic_year.academic_year})"
+        self.class_name = f"{self.program} {self.branch} {self.semester} {self.div} ({self.academic_year.academic_year})"
         super().save(*args, **kwargs)   
 
     def __str__(self):
