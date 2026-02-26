@@ -119,7 +119,7 @@ class Faculty(models.Model):
     department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True)    
 
     def __str__(self):
-        return f"{self.salutation} {self.name} ({self.employee_id})"
+        return f"{self.salutation} {self.name} ({self.department})"
     
     
 class Subject(models.Model):
